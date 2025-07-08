@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Shortage Prediction Dashboard</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>🩺 Drug Shortage Prediction Dashboard</h1>
+            <p>Real-time ML-powered drug shortage risk analysis</p>
+        </header>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading ML models and data...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="main-content" style="display: none;">
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card">
+                    <h3>Total Shortage Records</h3>
+                    <div id="total-shortages" class="metric">-</div>
+                </div>
+                <div class="card">
+                    <h3>Total Enforcement Records</h3>
+                    <div id="total-enforcements" class="metric">-</div>
+                </div>
+                <div class="card">
+                    <h3>High Risk Drugs</h3>
+                    <div id="high-risk-count" class="metric">-</div>
+                </div>
+                <div class="card">
+                    <h3>Model Accuracy</h3>
+                    <div id="model-accuracy" class="metric">-</div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label for="risk-filter">Risk Level Filter:</label>
+                    <select id="risk-filter" onchange="updatePredictions()">
+                        <option value="">All Levels</option>
+                        <option value="High">High Risk</option>
+                        <option value="Medium">Medium Risk</option>
+                        <option value="Low">Low Risk</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="company-filter">Company Filter:</label>
+                    <input type="text" id="company-filter" placeholder="Search companies..." onkeyup="updatePredictions()">
+                </div>
+                <div class="control-group">
+                    <label for="drug-search">Drug Search:</label>
+                    <input type="text" id="drug-search" placeholder="Search specific drug...">
+                    <button onclick="searchDrug()">Search</button>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Risk Distribution Chart -->
+                <div class="chart-container">
+                    <h3>Risk Level Distribution</h3>
+                    <div id="risk-distribution-chart"></div>
+                </div>
+
+                <!-- Model Performance Chart -->
+                <div class="chart-container">
+                    <h3>Model Performance (AUC Scores)</h3>
+                    <div id="model-performance-chart"></div>
+                </div>
+
+                <!-- Feature Importance Chart -->
+                <div class="chart-container">
+                    <h3>Top Features for Prediction</h3>
+                    <div id="feature-importance-chart"></div>
+                </div>
+
+                <!-- Timeline Chart -->
+                <div class="chart-container">
+                    <h3>Shortage Timeline</h3>
+                    <div id="shortage-timeline-chart"></div>
+                </div>
+
+                <!-- Company Risk Chart -->
+                <div class="chart-container">
+                    <h3>Company Risk Analysis</h3>
+                    <div id="company-risk-chart"></div>
+                </div>
+
+                <!-- Category Analysis Chart -->
+                <div class="chart-container">
+                    <h3>Drug Categories at Risk</h3>
+                    <div id="category-analysis-chart"></div>
+                </div>
+            </div>
+
+            <!-- Predictions Table -->
+            <div class="predictions-section">
+                <h3>🔴 High Risk Drug Predictions</h3>
+                <div id="predictions-table"></div>
+            </div>
+
+            <!-- Drug Search Results -->
+            <div id="drug-search-results" class="search-results" style="display: none;">
+                <h3>Drug Search Results</h3>
+                <div id="search-results-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html> 

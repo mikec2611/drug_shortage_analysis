@@ -1,0 +1,383 @@
+/* Drug Shortage Prediction Dashboard Styles */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    line-height: 1.6;
+}
+
+.dashboard {
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Header Styles */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.dashboard-header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+/* Loading Styles */
+.loading {
+    text-align: center;
+    padding: 60px;
+    color: white;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Main Content */
+.main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.card h3 {
+    color: #666;
+    font-size: 1em;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.metric {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #4a90e2;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.control-group label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9em;
+}
+
+.control-group input,
+.control-group select {
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+    outline: none;
+    border-color: #4a90e2;
+}
+
+.control-group button {
+    padding: 10px 20px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+.control-group button:hover {
+    background: #357abd;
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.chart-container {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.chart-container:hover {
+    transform: translateY(-3px);
+}
+
+.chart-container h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.2em;
+    text-align: center;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+/* Chart Styles */
+.chart-container svg {
+    width: 100%;
+    height: 300px;
+}
+
+/* D3 Chart Specific Styles */
+.bar {
+    transition: fill 0.3s ease;
+}
+
+.bar:hover {
+    fill: #357abd !important;
+}
+
+.axis {
+    font-size: 12px;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #ccc;
+    shape-rendering: crispEdges;
+}
+
+.line {
+    fill: none;
+    stroke: #4a90e2;
+    stroke-width: 2px;
+}
+
+.dot {
+    fill: #4a90e2;
+    stroke: white;
+    stroke-width: 2px;
+}
+
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    pointer-events: none;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+/* Predictions Section */
+.predictions-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.predictions-section h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.3em;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+/* Table Styles */
+.predictions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.predictions-table th,
+.predictions-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.predictions-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.predictions-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* Risk Level Badges */
+.risk-high {
+    background: #ff6b6b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.risk-medium {
+    background: #ffa726;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.risk-low {
+    background: #66bb6a;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+/* Search Results */
+.search-results {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.search-results h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.3em;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+/* Color Schemes for Different Chart Types */
+.color-high { fill: #ff6b6b; }
+.color-medium { fill: #ffa726; }
+.color-low { fill: #66bb6a; }
+
+.color-primary { fill: #4a90e2; }
+.color-secondary { fill: #7b68ee; }
+.color-accent { fill: #20b2aa; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .controls {
+        flex-direction: column;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2em;
+    }
+    
+    .dashboard-header p {
+        font-size: 1em;
+    }
+    
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.main-content {
+    animation: fadeIn 0.8s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+} 
