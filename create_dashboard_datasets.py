@@ -83,6 +83,27 @@ class DashboardDatasetCreator:
     
     def create_monthly_trends_dataset(self):
         """Create monthly trends dataset combining shortages and enforcements."""
+        # Debug: Check status values and June 2025 data
+        debug_query = """
+        SELECT 
+            DATE_TRUNC('month', initial_posting_date) as month,
+            status,
+            COUNT(*) as count
+        FROM drug_shortage_data 
+        WHERE DATE_TRUNC('month', initial_posting_date) = '2025-06-01'
+        GROUP BY DATE_TRUNC('month', initial_posting_date), status
+        ORDER BY count DESC;
+        """
+        
+        try:
+            debug_result = self.execute_sql(debug_query, "Debugging June 2025 data")
+            logger.info("🔍 June 2025 status breakdown:")
+            for row in debug_result:
+                logger.info(f"   Status: {row[1]} | Count: {row[2]}")
+        except Exception as e:
+            logger.warning(f"⚠️ Debug query failed: {e}")
+        
+        # Main query - include ALL records for monthly trends
         query = """
         WITH shortage_monthly AS (
             SELECT 
@@ -133,8 +154,8 @@ class DashboardDatasetCreator:
                 COUNT(*) as shortage_count,
                 COUNT(DISTINCT therapeutic_category) as categories_affected,
                 COUNT(DISTINCT generic_name) as drugs_affected,
-                COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) as current_shortages,
-                COUNT(CASE WHEN status = 'Shortage resolved' THEN 1 END) as resolved_shortages,
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
+                COUNT(CASE WHEN status = 'Resolved' THEN 1 END) as resolved_shortages,
                 MIN(initial_posting_date) as first_shortage_date,
                 MAX(initial_posting_date) as latest_shortage_date
             FROM drug_shortage_data 
@@ -199,10 +220,10 @@ class DashboardDatasetCreator:
             COUNT(*) as shortage_count,
             COUNT(DISTINCT company_name) as companies_affected,
             COUNT(DISTINCT generic_name) as drugs_affected,
-            COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) as current_shortages,
-            COUNT(CASE WHEN status = 'Shortage resolved' THEN 1 END) as resolved_shortages,
+            COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
+            COUNT(CASE WHEN status = 'Resolved' THEN 1 END) as resolved_shortages,
             ROUND(
-                COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) * 100.0 / COUNT(*), 
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) * 100.0 / COUNT(*), 
                 2
             ) as current_shortage_percentage,
             MIN(initial_posting_date) as first_shortage_date,
@@ -259,7 +280,7 @@ class DashboardDatasetCreator:
                 proprietary_name,
                 COUNT(*) as shortage_count,
                 COUNT(DISTINCT company_name) as companies_affected,
-                COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) as current_shortages,
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
                 therapeutic_category,
                 MODE() WITHIN GROUP (ORDER BY shortage_reason) as most_common_reason,
                 MIN(initial_posting_date) as first_shortage_date,
@@ -301,9 +322,9 @@ class DashboardDatasetCreator:
             COUNT(DISTINCT company_name) as companies_affected,
             COUNT(DISTINCT therapeutic_category) as categories_affected,
             COUNT(DISTINCT generic_name) as drugs_affected,
-            COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) as current_shortages,
+            COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
             ROUND(
-                COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) * 100.0 / COUNT(*), 
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) * 100.0 / COUNT(*), 
                 2
             ) as current_shortage_percentage,
             MIN(initial_posting_date) as first_occurrence,
@@ -397,13 +418,50 @@ class DashboardDatasetCreator:
     
     def create_summary_metrics_dataset(self):
         """Create high-level summary metrics for dashboard overview."""
+        # Debug: Check all status values in the data
+        debug_status_query = """
+        SELECT status, COUNT(*) as count 
+        FROM drug_shortage_data 
+        GROUP BY status 
+        ORDER BY count DESC;
+        """
+        
+        try:
+            debug_result = self.execute_sql(debug_status_query, "Debugging all status values")
+            logger.info("🔍 All status values in drug shortage data:")
+            for row in debug_result:
+                logger.info(f"   Status: '{row[0]}' | Count: {row[1]}")
+        except Exception as e:
+            logger.warning(f"⚠️ Debug status query failed: {e}")
+            
+        # Debug: Check recent data including June 2025
+        debug_recent_query = """
+        SELECT 
+            DATE_TRUNC('month', initial_posting_date) as month,
+            status,
+            COUNT(*) as count 
+        FROM drug_shortage_data 
+        WHERE initial_posting_date >= '2025-06-01'
+        GROUP BY DATE_TRUNC('month', initial_posting_date), status
+        ORDER BY month DESC, count DESC;
+        """
+        
+        try:
+            debug_result = self.execute_sql(debug_recent_query, "Debugging June 2025+ data")
+            logger.info("🔍 June 2025+ status breakdown:")
+            for row in debug_result:
+                logger.info(f"   Month: {row[0]} | Status: '{row[1]}' | Count: {row[2]}")
+        except Exception as e:
+            logger.warning(f"⚠️ Debug recent query failed: {e}")
+        
         query = """
         WITH shortage_metrics AS (
             SELECT 
                 COUNT(*) as total_shortages,
                 COUNT(DISTINCT company_name) as companies_with_shortages,
                 COUNT(DISTINCT therapeutic_category) as affected_categories,
-                COUNT(CASE WHEN status = 'Currently in shortage' THEN 1 END) as current_shortages,
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
+                COUNT(CASE WHEN status IN ('Current', 'To Be Discontinued') THEN 1 END) as active_shortages,
                 COUNT(CASE WHEN initial_posting_date >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as shortages_last_30_days
             FROM drug_shortage_data
         ),
@@ -415,22 +473,33 @@ class DashboardDatasetCreator:
                 COUNT(CASE WHEN status = 'Ongoing' THEN 1 END) as ongoing_recalls,
                 COUNT(CASE WHEN recall_initiation_date >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as enforcements_last_30_days
             FROM drug_enforcement_data
+        ),
+        unique_companies AS (
+            SELECT COUNT(DISTINCT company_name) as total_companies_affected
+            FROM (
+                SELECT DISTINCT company_name FROM drug_shortage_data WHERE company_name IS NOT NULL
+                UNION
+                SELECT DISTINCT recalling_firm as company_name FROM drug_enforcement_data WHERE recalling_firm IS NOT NULL
+            ) combined_companies
         )
         SELECT 
             s.total_shortages,
             s.companies_with_shortages,
             s.affected_categories,
             s.current_shortages,
+            s.active_shortages,
             s.shortages_last_30_days,
             e.total_enforcements,
             e.companies_with_enforcements,
             e.class_i_recalls,
             e.ongoing_recalls,
             e.enforcements_last_30_days,
+            u.total_companies_affected,
             (s.total_shortages + e.total_enforcements) as total_issues,
             CURRENT_DATE as metrics_date
         FROM shortage_metrics s
         CROSS JOIN enforcement_metrics e
+        CROSS JOIN unique_companies u
         """
         
         self.create_table_from_query(

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Shortage Analysis Dashboard</title>
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- CSS Styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Drug Shortage Analysis Dashboard</h1>
+                    <p>Comprehensive analysis of drug shortages and enforcement actions (2020-2025)</p>
+                </div>
+                <div class="header-right">
+                    <div class="company-filter">
+                        <label for="companySelect">Filter by Company:</label>
+                        <select id="companySelect">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading dashboard data...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-message" class="error-message" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Failed to load dashboard data. Please try again.</p>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboard-content" style="display: none;">
+                
+                <!-- Compact Summary Metrics -->
+                <section class="metrics-section-compact">
+                    <div class="metrics-grid-compact">
+                        <div class="metric-card-compact">
+                            <div class="metric-icon-compact">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="metric-content-compact">
+                                <h3 id="totalIssues">-</h3>
+                                <p>Total Issues</p>
+                            </div>
+                        </div>
+                        <div class="metric-card-compact">
+                            <div class="metric-icon-compact">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="metric-content-compact">
+                                <h3 id="companiesAffected">-</h3>
+                                <p>Companies Affected</p>
+                            </div>
+                        </div>
+                        <div class="metric-card-compact">
+                            <div class="metric-icon-compact">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <div class="metric-content-compact">
+                                <h3 id="currentShortages">-</h3>
+                                <p>Active Shortages</p>
+                            </div>
+                        </div>
+                        <div class="metric-card-compact">
+                            <div class="metric-icon-compact">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="metric-content-compact">
+                                <h3 id="classIRecalls">-</h3>
+                                <p>Class I Recalls</p>
+                            </div>
+                        </div>
+                        <div class="metric-card-compact">
+                            <div class="metric-icon-compact">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-content-compact">
+                                <h3 id="ongoingRecalls">-</h3>
+                                <p>Ongoing Recalls</p>
+                            </div>
+                        </div>
+                        <div class="metric-card-compact">
+                            <div class="metric-icon-compact">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="metric-content-compact">
+                                <h3 id="recentActivity">-</h3>
+                                <p>Recent Activity</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Primary Charts Section - Above the Fold -->
+                <section class="primary-charts-section">
+                    <div class="primary-charts-grid">
+                        
+                        <!-- Monthly Trends Chart - Full Width -->
+                        <div class="chart-container-primary full-width">
+                            <div class="chart-header">
+                                <h2>Monthly Trends</h2>
+                            </div>
+                            <div id="monthlyTrendsChart" class="chart-primary"></div>
+                        </div>
+
+                        <!-- Company Analysis Chart -->
+                        <div class="chart-container-primary">
+                            <div class="chart-header">
+                                <h2>Top Companies by Issues</h2>
+                                <div class="chart-controls">
+                                    <select id="companyLimit">
+                                        <option value="10">Top 10</option>
+                                        <option value="15" selected>Top 15</option>
+                                        <option value="20">Top 20</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="companyAnalysisChart" class="chart-primary"></div>
+                        </div>
+
+                        <!-- Therapeutic Categories Chart -->
+                        <div class="chart-container-primary">
+                            <div class="chart-header">
+                                <h2>Therapeutic Categories</h2>
+                            </div>
+                            <div id="therapeuticCategoriesChart" class="chart-primary"></div>
+                        </div>
+
+                        <!-- Shortage Reasons Chart -->
+                        <div class="chart-container-primary">
+                            <div class="chart-header">
+                                <h2>Shortage Reasons</h2>
+                            </div>
+                            <div id="shortageReasonsChart" class="chart-primary"></div>
+                        </div>
+
+                        <!-- Recall Severity Chart -->
+                        <div class="chart-container-primary">
+                            <div class="chart-header">
+                                <h2>Recall Severity</h2>
+                            </div>
+                            <div id="recallSeverityChart" class="chart-primary"></div>
+                        </div>
+
+                        <!-- Geographic Analysis Chart -->
+                        <div class="chart-container-primary">
+                            <div class="chart-header">
+                                <h2>Geographic Distribution</h2>
+                            </div>
+                            <div id="geographicChart" class="chart-primary"></div>
+                        </div>
+
+                        <!-- Top Affected Drugs Chart -->
+                        <div class="chart-container-primary">
+                            <div class="chart-header">
+                                <h2>Most Affected Drugs</h2>
+                            </div>
+                            <div id="topDrugsChart" class="chart-primary"></div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- Data Tables Section -->
+                <section class="tables-section">
+                    <div class="tables-grid">
+                        
+                        <!-- Top Drugs Table -->
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h2>Most Affected Drugs</h2>
+                                <div class="table-controls">
+                                    <select id="drugsLimit">
+                                        <option value="10">Top 10</option>
+                                        <option value="15" selected>Top 15</option>
+                                        <option value="25">Top 25</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="topDrugsTable" class="data-table"></div>
+                        </div>
+
+                        <!-- Recent Activity Table -->
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h2>Recent Activity</h2>
+                                <div class="table-controls">
+                                    <select id="activityType">
+                                        <option value="">All Types</option>
+                                        <option value="Shortage">Shortages</option>
+                                        <option value="Enforcement">Enforcements</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="recentActivityTable" class="data-table"></div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Drug Shortage Analysis Dashboard. Data from FDA APIs.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html> 
