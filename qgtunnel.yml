@@ -1,6 +1,0 @@
-tunnels:
-  db:
-    proto: tcp
-    host: db-drug-shortage-analysis.czowmakq697y.us-east-2.rds.amazonaws.com
-    port: 5432
-    localport: 5432 
