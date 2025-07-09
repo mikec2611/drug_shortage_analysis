@@ -56,6 +56,29 @@
             <!-- Dashboard Content -->
             <div id="dashboard-content" style="display: none;">
                 
+                <!-- Gen AI Summary Section -->
+                <section class="ai-summary-section">
+                    <div class="ai-summary-container">
+                        <div class="ai-summary-header">
+                            <h2><i class="fas fa-robot"></i> Gen AI Summary</h2>
+                            <p class="ai-summary-subtitle">AI-generated insights and analysis of current drug shortage and enforcement data</p>
+                        </div>
+                        <div class="ai-summary-content">
+                            <div id="ai-summary-loading" class="ai-summary-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Generating AI insights...</span>
+                            </div>
+                            <div id="ai-summary-text" class="ai-summary-text" style="display: none;">
+                                <!-- AI summary will be loaded here -->
+                            </div>
+                            <div id="ai-summary-error" class="ai-summary-error" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Unable to generate AI insights at this time.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
                 <!-- Compact Summary Metrics -->
                 <section class="metrics-section-compact">
                     <div class="metrics-grid-compact">

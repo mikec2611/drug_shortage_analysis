@@ -200,6 +200,9 @@ async function loadDashboardData() {
         // Update dashboard - always update summary metrics
         updateSummaryMetrics(summaryMetrics);
         
+        // Load AI summary
+        loadAISummary();
+        
         // Hide loading and show content first
         hideLoading();
         
@@ -272,6 +275,51 @@ async function loadCompanies() {
         const select = document.getElementById('companySelect');
         if (select) {
             select.innerHTML = '<option value="">All Companies (Error loading list)</option>';
+        }
+    }
+}
+
+// ===== AI SUMMARY =====
+async function loadAISummary() {
+    const loadingElement = document.getElementById('ai-summary-loading');
+    const textElement = document.getElementById('ai-summary-text');
+    const errorElement = document.getElementById('ai-summary-error');
+    
+    try {
+        // Show loading state
+        loadingElement.style.display = 'flex';
+        textElement.style.display = 'none';
+        errorElement.style.display = 'none';
+        
+        // Fetch AI summary
+        const response = await fetchData('ai_summary');
+        
+        if (response.error) {
+            throw new Error(response.summary || 'Failed to generate AI summary');
+        }
+        
+        // Update content
+        textElement.textContent = response.summary;
+        
+        // Show success state
+        loadingElement.style.display = 'none';
+        textElement.style.display = 'block';
+        errorElement.style.display = 'none';
+        
+        console.log('AI summary loaded successfully', selectedCompany ? `(filtered by: ${selectedCompany})` : '(all data)');
+        
+    } catch (error) {
+        console.error('Error loading AI summary:', error);
+        
+        // Show error state
+        loadingElement.style.display = 'none';
+        textElement.style.display = 'none';
+        errorElement.style.display = 'flex';
+        
+        // Update error message if available
+        const errorSpan = errorElement.querySelector('span');
+        if (errorSpan) {
+            errorSpan.textContent = error.message || 'Unable to generate AI insights at this time.';
         }
     }
 }

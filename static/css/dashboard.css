@@ -176,6 +176,98 @@ body {
     letter-spacing: 0.5px;
 }
 
+/* ===== AI SUMMARY SECTION ===== */
+.ai-summary-section {
+    margin-bottom: 2rem;
+}
+
+.ai-summary-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-summary-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+    pointer-events: none;
+}
+
+.ai-summary-header {
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.ai-summary-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ai-summary-header i {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.ai-summary-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.ai-summary-content {
+    position: relative;
+    z-index: 1;
+    min-height: 60px;
+}
+
+.ai-summary-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+}
+
+.ai-summary-loading i {
+    font-size: 1.1rem;
+}
+
+.ai-summary-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.95);
+    text-align: justify;
+}
+
+.ai-summary-error {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+}
+
+.ai-summary-error i {
+    color: #fbbf24;
+    font-size: 1.1rem;
+}
+
 /* ===== COMPACT METRICS SECTION ===== */
 .metrics-section-compact {
     margin-bottom: 2rem;
@@ -516,6 +608,22 @@ body {
         font-size: 0.7rem;
     }
     
+    .ai-summary-container {
+        padding: 1.5rem;
+    }
+    
+    .ai-summary-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .ai-summary-subtitle {
+        font-size: 0.85rem;
+    }
+    
+    .ai-summary-text {
+        font-size: 0.95rem;
+    }
+    
     .primary-charts-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -589,6 +697,23 @@ body {
     
     .metric-content-compact p {
         font-size: 0.6rem;
+    }
+    
+    .ai-summary-container {
+        padding: 1rem;
+    }
+    
+    .ai-summary-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .ai-summary-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .ai-summary-text {
+        font-size: 0.9rem;
+        text-align: left;
     }
     
     .chart-primary {

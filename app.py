@@ -12,6 +12,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from drug_data_utils import DB_CONFIG, logger
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -21,6 +22,9 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
 
 # Database connection
 engine = create_engine(f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}")
+
+# OpenAI client
+client = OpenAI()
 
 def execute_query(query):
     """Execute a database query and return results as a list of dictionaries."""
@@ -48,6 +52,20 @@ def serialize_data(data):
             elif isinstance(value, datetime):
                 record[key] = value.isoformat()
     return data
+
+def get_gpt_info(prompt):
+    """Get insights from OpenAI GPT model."""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"OpenAI API error: {e}")
+        return "Unable to generate AI insights at this time. Please try again later."
 
 # Routes
 @app.route('/')
@@ -156,6 +174,139 @@ def api_companies():
     except Exception as e:
         logger.error(f"Error in companies endpoint: {e}")
         return jsonify({'error': 'Failed to load companies'}), 500
+
+@app.route('/api/ai_summary')
+def api_ai_summary():
+    """API endpoint for AI-generated insights summary."""
+    try:
+        company = request.args.get('company')
+        
+        # Get current dashboard data for context
+        if company:
+            # Get company-specific data
+            summary_data = execute_query(f"""
+                WITH shortage_data AS (
+                    SELECT 
+                        COUNT(*) as total_shortages,
+                        COUNT(DISTINCT therapeutic_category) as categories_affected,
+                        COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
+                        string_agg(DISTINCT shortage_reason, ', ') as common_reasons,
+                        string_agg(DISTINCT therapeutic_category, ', ') as affected_categories
+                    FROM drug_shortage_data WHERE company_name = '{company}'
+                ),
+                enforcement_data AS (
+                    SELECT 
+                        COUNT(*) as total_recalls,
+                        COUNT(CASE WHEN classification = 'Class I' THEN 1 END) as class_i_recalls,
+                        COUNT(CASE WHEN status = 'Ongoing' THEN 1 END) as ongoing_recalls,
+                        string_agg(DISTINCT state, ', ') as states_affected
+                    FROM drug_enforcement_data WHERE recalling_firm = '{company}'
+                )
+                SELECT 
+                    '{company}' as company_name,
+                    s.total_shortages,
+                    s.categories_affected,
+                    s.current_shortages,
+                    s.common_reasons,
+                    s.affected_categories,
+                    e.total_recalls,
+                    e.class_i_recalls,
+                    e.ongoing_recalls,
+                    e.states_affected
+                FROM shortage_data s, enforcement_data e
+            """)
+            
+            if summary_data:
+                data = summary_data[0]
+                prompt = f"""
+                Based on the following FDA drug shortage and enforcement data for {company}, provide a concise 3-4 sentence summary of key insights and trends:
+
+                Company: {data.get('company_name', 'N/A')}
+                Total Shortages: {data.get('total_shortages', 0)}
+                Current Active Shortages: {data.get('current_shortages', 0)}
+                Therapeutic Categories Affected: {data.get('categories_affected', 0)}
+                Total Recalls: {data.get('total_recalls', 0)}
+                Class I Recalls (Most Serious): {data.get('class_i_recalls', 0)}
+                Ongoing Recalls: {data.get('ongoing_recalls', 0)}
+                States Affected by Recalls: {data.get('states_affected', 'N/A')}
+                Common Shortage Reasons: {data.get('common_reasons', 'N/A')}
+                Affected Drug Categories: {data.get('affected_categories', 'N/A')}
+
+                Focus on the most significant patterns, risks, and implications for patients and healthcare providers. Keep it informative but accessible.
+
+                Also incorporate relevant current market insights, regulatory developments, or industry trends related to {company} and pharmaceutical supply chain issues that would provide additional context to healthcare professionals.
+                """
+            else:
+                prompt = f"Provide insights about {company} regarding drug shortages and enforcement actions. Include any relevant current market trends, regulatory developments, or supply chain challenges affecting this pharmaceutical company that would be valuable for healthcare professionals to understand."
+        else:
+            # Get overall market data
+            summary_data = execute_query("""
+                WITH overall_metrics AS (
+                    SELECT 
+                        total_shortages,
+                        current_shortages,
+                        total_enforcements,
+                        class_i_recalls,
+                        ongoing_recalls,
+                        total_companies_affected
+                    FROM dashboard_summary_metrics LIMIT 1
+                ),
+                recent_trends AS (
+                    SELECT 
+                        COUNT(*) as recent_issues,
+                        SUM(shortage_count) as recent_shortages,
+                        SUM(enforcement_count) as recent_enforcements
+                    FROM dashboard_monthly_trends 
+                    WHERE month >= CURRENT_DATE - INTERVAL '3 months'
+                )
+                SELECT 
+                    o.total_shortages,
+                    o.current_shortages,
+                    o.total_enforcements,
+                    o.class_i_recalls,
+                    o.ongoing_recalls,
+                    o.total_companies_affected,
+                    r.recent_shortages,
+                    r.recent_enforcements
+                FROM overall_metrics o, recent_trends r
+            """)
+            
+            if summary_data:
+                data = summary_data[0]
+                prompt = f"""
+                Based on the following FDA drug shortage and enforcement data for the overall pharmaceutical market (2020-2025), provide a concise 3-4 sentence summary of key insights and trends:
+
+                Total Drug Shortages: {data.get('total_shortages', 0)}
+                Current Active Shortages: {data.get('current_shortages', 0)}
+                Total Enforcement Actions: {data.get('total_enforcements', 0)}
+                Class I Recalls (Most Serious): {data.get('class_i_recalls', 0)}
+                Ongoing Recalls: {data.get('ongoing_recalls', 0)}
+                Companies Affected: {data.get('total_companies_affected', 0)}
+                Recent Shortages (Last 3 Months): {data.get('recent_shortages', 0)}
+                Recent Enforcements (Last 3 Months): {data.get('recent_enforcements', 0)}
+
+                Focus on the most significant patterns, trends, and implications for the pharmaceutical industry, patients, and healthcare providers. Keep it informative but accessible.
+
+                Also incorporate relevant current industry insights, regulatory policy changes, supply chain developments, or market dynamics that are impacting pharmaceutical availability and safety to provide broader context for healthcare professionals.
+                """
+            else:
+                prompt = "Provide insights about current US drug shortages and enforcement actions. Include relevant information about industry trends, regulatory developments, supply chain challenges, and market dynamics that are impacting pharmaceutical availability and patient safety."
+        
+        # Get AI insights
+        ai_insights = get_gpt_info(prompt)
+        
+        return jsonify({
+            'summary': ai_insights,
+            'company': company,
+            'generated_at': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in AI summary endpoint: {e}")
+        return jsonify({
+            'summary': 'Unable to generate AI insights at this time. Please try again later.',
+            'error': True
+        }), 500
 
 @app.route('/api/monthly_trends')
 def api_monthly_trends():
