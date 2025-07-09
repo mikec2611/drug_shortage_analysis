@@ -197,10 +197,8 @@ async function loadDashboardData() {
             recentActivity
         };
 
-        // Update dashboard - only update summary metrics if no company is selected
-        if (!selectedCompany) {
-            updateSummaryMetrics(summaryMetrics);
-        }
+        // Update dashboard - always update summary metrics
+        updateSummaryMetrics(summaryMetrics);
         
         // Hide loading and show content first
         hideLoading();

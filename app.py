@@ -58,25 +58,70 @@ def index():
 @app.route('/api/summary_metrics')
 def api_summary_metrics():
     """API endpoint for summary metrics."""
-    query = """
-    SELECT 
-        total_shortages,
-        companies_with_shortages,
-        affected_categories,
-        current_shortages,
-        active_shortages,
-        shortages_last_30_days,
-        total_enforcements,
-        companies_with_enforcements,
-        class_i_recalls,
-        ongoing_recalls,
-        enforcements_last_30_days,
-        total_companies_affected,
-        total_issues,
-        metrics_date
-    FROM dashboard_summary_metrics 
-    LIMIT 1;
-    """
+    company = request.args.get('company')
+    
+    if company:
+        query = f"""
+        WITH shortage_metrics AS (
+            SELECT 
+                COUNT(*) as total_shortages,
+                1 as companies_with_shortages,
+                COUNT(DISTINCT therapeutic_category) as affected_categories,
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
+                COUNT(CASE WHEN status IN ('Current', 'To Be Discontinued') THEN 1 END) as active_shortages,
+                COUNT(CASE WHEN initial_posting_date >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as shortages_last_30_days
+            FROM drug_shortage_data 
+            WHERE company_name = '{company}'
+        ),
+        enforcement_metrics AS (
+            SELECT 
+                COUNT(*) as total_enforcements,
+                1 as companies_with_enforcements,
+                COUNT(CASE WHEN classification = 'Class I' THEN 1 END) as class_i_recalls,
+                COUNT(CASE WHEN status = 'Ongoing' THEN 1 END) as ongoing_recalls,
+                COUNT(CASE WHEN recall_initiation_date >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as enforcements_last_30_days
+            FROM drug_enforcement_data 
+            WHERE recalling_firm = '{company}'
+        )
+        SELECT 
+            s.total_shortages,
+            s.companies_with_shortages,
+            s.affected_categories,
+            s.current_shortages,
+            s.active_shortages,
+            s.shortages_last_30_days,
+            e.total_enforcements,
+            e.companies_with_enforcements,
+            e.class_i_recalls,
+            e.ongoing_recalls,
+            e.enforcements_last_30_days,
+            1 as total_companies_affected,
+            (s.total_shortages + e.total_enforcements) as total_issues,
+            CURRENT_DATE as metrics_date
+        FROM shortage_metrics s
+        CROSS JOIN enforcement_metrics e;
+        """
+    else:
+        query = """
+        SELECT 
+            total_shortages,
+            companies_with_shortages,
+            affected_categories,
+            current_shortages,
+            active_shortages,
+            shortages_last_30_days,
+            total_enforcements,
+            companies_with_enforcements,
+            class_i_recalls,
+            ongoing_recalls,
+            enforcements_last_30_days,
+            total_companies_affected,
+            total_issues,
+            metrics_date
+        FROM dashboard_summary_metrics 
+        LIMIT 1;
+        """
+    
     data = execute_query(query)
     return jsonify(serialize_data(data)[0] if data else {})
 
@@ -223,18 +268,40 @@ def api_therapeutic_categories():
 @app.route('/api/geographic_analysis')
 def api_geographic_analysis():
     """API endpoint for geographic analysis data."""
-    query = """
-    SELECT 
-        state,
-        country,
-        enforcement_count,
-        companies_affected,
-        class_i_recalls,
-        class_i_percentage,
-        ongoing_recalls
-    FROM dashboard_geographic_analysis 
-    ORDER BY enforcement_count DESC;
-    """
+    company = request.args.get('company')
+    
+    if company:
+        query = f"""
+        SELECT 
+            state,
+            country,
+            COUNT(*) as enforcement_count,
+            COUNT(DISTINCT recalling_firm) as companies_affected,
+            COUNT(CASE WHEN classification = 'Class I' THEN 1 END) as class_i_recalls,
+            ROUND(
+                COUNT(CASE WHEN classification = 'Class I' THEN 1 END) * 100.0 / COUNT(*), 
+                2
+            ) as class_i_percentage,
+            COUNT(CASE WHEN status = 'Ongoing' THEN 1 END) as ongoing_recalls
+        FROM drug_enforcement_data 
+        WHERE state IS NOT NULL AND recalling_firm = '{company}'
+        GROUP BY state, country
+        ORDER BY enforcement_count DESC;
+        """
+    else:
+        query = """
+        SELECT 
+            state,
+            country,
+            enforcement_count,
+            companies_affected,
+            class_i_recalls,
+            class_i_percentage,
+            ongoing_recalls
+        FROM dashboard_geographic_analysis 
+        ORDER BY enforcement_count DESC;
+        """
+    
     data = execute_query(query)
     return jsonify(serialize_data(data))
 
@@ -284,39 +351,86 @@ def api_top_drugs():
 @app.route('/api/shortage_reasons')
 def api_shortage_reasons():
     """API endpoint for shortage reasons data."""
-    query = """
-    SELECT 
-        shortage_reason,
-        occurrence_count,
-        companies_affected,
-        categories_affected,
-        current_shortages,
-        current_shortage_percentage
-    FROM dashboard_shortage_reasons 
-    ORDER BY occurrence_count DESC;
-    """
+    company = request.args.get('company')
+    
+    if company:
+        query = f"""
+        SELECT 
+            shortage_reason,
+            COUNT(*) as occurrence_count,
+            COUNT(DISTINCT company_name) as companies_affected,
+            COUNT(DISTINCT therapeutic_category) as categories_affected,
+            COUNT(CASE WHEN status = 'Current' THEN 1 END) as current_shortages,
+            ROUND(
+                COUNT(CASE WHEN status = 'Current' THEN 1 END) * 100.0 / COUNT(*), 
+                2
+            ) as current_shortage_percentage
+        FROM drug_shortage_data 
+        WHERE shortage_reason IS NOT NULL AND company_name = '{company}'
+        GROUP BY shortage_reason
+        ORDER BY occurrence_count DESC;
+        """
+    else:
+        query = """
+        SELECT 
+            shortage_reason,
+            occurrence_count,
+            companies_affected,
+            categories_affected,
+            current_shortages,
+            current_shortage_percentage
+        FROM dashboard_shortage_reasons 
+        ORDER BY occurrence_count DESC;
+        """
+    
     data = execute_query(query)
     return jsonify(serialize_data(data))
 
 @app.route('/api/recall_severity')
 def api_recall_severity():
     """API endpoint for recall severity data."""
-    query = """
-    SELECT 
-        classification,
-        recall_count,
-        companies_affected,
-        ongoing_recalls,
-        ongoing_percentage
-    FROM dashboard_recall_severity 
-    ORDER BY 
-        CASE classification 
-            WHEN 'Class I' THEN 1 
-            WHEN 'Class II' THEN 2 
-            WHEN 'Class III' THEN 3 
-            ELSE 4 
-        END;
-    """
+    company = request.args.get('company')
+    
+    if company:
+        query = f"""
+        SELECT 
+            classification,
+            COUNT(*) as recall_count,
+            COUNT(DISTINCT recalling_firm) as companies_affected,
+            COUNT(CASE WHEN status = 'Ongoing' THEN 1 END) as ongoing_recalls,
+            ROUND(
+                COUNT(CASE WHEN status = 'Ongoing' THEN 1 END) * 100.0 / COUNT(*), 
+                2
+            ) as ongoing_percentage
+        FROM drug_enforcement_data 
+        WHERE classification IS NOT NULL AND recalling_firm = '{company}'
+        GROUP BY classification
+        ORDER BY 
+            CASE classification 
+                WHEN 'Class I' THEN 1 
+                WHEN 'Class II' THEN 2 
+                WHEN 'Class III' THEN 3 
+                ELSE 4 
+            END;
+        """
+    else:
+        query = """
+        SELECT 
+            classification,
+            recall_count,
+            companies_affected,
+            ongoing_recalls,
+            ongoing_percentage
+        FROM dashboard_recall_severity 
+        ORDER BY 
+            CASE classification 
+                WHEN 'Class I' THEN 1 
+                WHEN 'Class II' THEN 2 
+                WHEN 'Class III' THEN 3 
+                ELSE 4 
+            END;
+        """
+    
     data = execute_query(query)
     return jsonify(serialize_data(data))
 

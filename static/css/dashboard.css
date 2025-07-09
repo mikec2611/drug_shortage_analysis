@@ -751,4 +751,14 @@ body {
     background: #5a67d8;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Chart subtitle styling */
+.chart-subtitle {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+    margin-top: 0.25rem;
+    font-weight: 400;
+    font-style: italic;
 } 
