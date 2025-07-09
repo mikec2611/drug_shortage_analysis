@@ -432,7 +432,7 @@ function createMonthlyTrendsChart(data) {
     g.append('path')
         .datum(data)
         .attr('class', 'line')
-        .attr('stroke', colorSchemes.primary[1])
+        .attr('stroke', '#dc2626')
         .attr('d', enforcementLine);
     
     // Add dots
@@ -456,7 +456,7 @@ function createMonthlyTrendsChart(data) {
         .attr('cx', d => xScale(d.month))
         .attr('cy', d => yScale(d.enforcement_count))
         .attr('r', 4)
-        .attr('stroke', colorSchemes.primary[1])
+        .attr('stroke', '#dc2626')
         .on('mouseover', function(event, d) {
             showTooltip(event, `Enforcements: ${d.enforcement_count}<br>Month: ${d3.timeFormat('%b %Y')(d.month)}`);
         })
@@ -481,7 +481,7 @@ function createMonthlyTrendsChart(data) {
     legend.append('line')
         .attr('x1', 0).attr('x2', 15)
         .attr('y1', 20).attr('y2', 20)
-        .attr('stroke', colorSchemes.primary[1])
+        .attr('stroke', '#dc2626')
         .attr('stroke-width', 2);
     
     legend.append('text')
@@ -647,7 +647,20 @@ function createTherapeuticCategoriesChart(data) {
         .attr('dy', '0.35em')
         .style('text-anchor', 'middle')
         .style('font-size', '10px')
-        .text(d => d.data.shortage_count > 10 ? d.data.shortage_count : '');
+        .style('font-weight', '500')
+        .style('fill', 'white')
+        .text(d => {
+            // Only show labels for slices with significant size (> 5% of total)
+            const percentage = (d.endAngle - d.startAngle) / (2 * Math.PI);
+            if (percentage < 0.05) return '';
+            
+            // Abbreviate long category names
+            const categoryName = d.data.therapeutic_category;
+            if (categoryName.length > 15) {
+                return categoryName.substring(0, 12) + '...';
+            }
+            return categoryName;
+        });
 }
 
 // ===== GEOGRAPHIC CHART =====
@@ -1040,7 +1053,7 @@ function createRecentActivityTable(data) {
         .text(d => d);
     
     const rows = tbody.selectAll('tr')
-        .data(data)
+        .data(data.slice(0, 25))
         .enter()
         .append('tr');
     

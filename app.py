@@ -232,7 +232,7 @@ def api_ai_summary():
                 Common Shortage Reasons: {data.get('common_reasons', 'N/A')}
                 Affected Drug Categories: {data.get('affected_categories', 'N/A')}
 
-                Focus on the most significant patterns, risks, and implications for patients and healthcare providers. Keep it informative but accessible.
+                Focus on the most significant patterns, risks, and implications for patients and healthcare providers. Keep it informative but accessible and not alarmist.
 
                 Also incorporate relevant current market insights, regulatory developments, or industry trends related to {company} and pharmaceutical supply chain issues that would provide additional context to healthcare professionals.
                 """
@@ -285,7 +285,7 @@ def api_ai_summary():
                 Recent Shortages (Last 3 Months): {data.get('recent_shortages', 0)}
                 Recent Enforcements (Last 3 Months): {data.get('recent_enforcements', 0)}
 
-                Focus on the most significant patterns, trends, and implications for the pharmaceutical industry, patients, and healthcare providers. Keep it informative but accessible.
+                Focus on the most significant patterns, trends, and implications for the pharmaceutical industry, patients, and healthcare providers. Keep it informative but accessible and not alarmist.
 
                 Also incorporate relevant current industry insights, regulatory policy changes, supply chain developments, or market dynamics that are impacting pharmaceutical availability and safety to provide broader context for healthcare professionals.
                 """
